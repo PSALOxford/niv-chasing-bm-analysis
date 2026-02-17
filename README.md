@@ -3,7 +3,7 @@ Code supporting the analysis of the effects of NIV chasing by non-physical trade
 
 The codebase was developed to support the analysis in:
 
-> **[Speculative Imbalance Positions by Non-Physical Traders: Impacts on Electricity System Balancing in Great Britain]**
+> **Speculative Imbalance Positions by Non-Physical Traders: Impacts on Electricity System Balancing in Great Britain**
 > *Joseph Cary; Thomas Morstyn*
 > *Submitted to Energy Economics, 2026*
 > DOI: 
@@ -168,7 +168,7 @@ You may also cite the software directly once a DOI is minted.
 
 ## License
 
-This repository is licensed under the [MIT License](LICENSE)
+This repository is licensed under the MIT License (LICENSE)
 
 ---
 
@@ -176,9 +176,9 @@ This repository is licensed under the [MIT License](LICENSE)
 
 For questions related to the methodology or publication:
 
-* Name: [Joseph Cary]
-* Email: [joseph.cary@wolfson.ox.ac.uk]
-* Institution: [Power Systems Architecture Lab, Department of Engineering Science, University of Oxford]
+* Name: Joseph Cary
+* Email: joseph.cary@wolfson.ox.ac.uk
+* Institution: Power Systems Architecture Lab, Department of Engineering Science, University of Oxford
 
 ---
 
