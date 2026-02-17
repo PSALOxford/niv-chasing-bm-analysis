@@ -1,9 +1,5 @@
 # niv-chasing-bm-analysis
-Code supporting the analysis of the effects of NIV chasing by non-physical traders in the GB market
-
-# GB Balancing Mechanism Analysis Toolkit
-
-This repository contains code for analysing Great Britain (GB) electricity Balancing Mechanism (BM) data, imbalance pricing, settlement cashflows, and related system metrics. It supports recalculation of system prices, Net Imbalance Volume (NIV), balancing and imbalance cashflows, stack-based pricing, and carbon emissions analysis.
+Code supporting the analysis of the effects of NIV chasing by non-physical traders in the GB market. This repository contains code for analysing Great Britain (GB) electricity Balancing Mechanism (BM) data, imbalance pricing, settlement cashflows, and related system metrics. It supports recalculation of system prices, Net Imbalance Volume (NIV), balancing and imbalance cashflows, stack-based pricing, and carbon emissions analysis.
 
 The codebase was developed to support the analysis in:
 
