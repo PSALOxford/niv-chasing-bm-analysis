@@ -147,9 +147,9 @@ async def run_by_month(
     
     # Recalculate imbalance cashflows
     npt_bsc_ids = [bsc_id for bsc_id, is_npt in bsc_roles_to_npt_mapping.items() if is_npt]
-    so_cashflows_df = recalculate_imbalance_cashflows.get_recalculated_imbalance_cashflows_SO(new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids)
-    supplier_cashflows_df = recalculate_imbalance_cashflows.recalculate_imbalance_cashflows_by_bsc_party_type(bsc_roles_to_supplier_mapping, new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids)
-    generator_cashflows_df = recalculate_imbalance_cashflows.recalculate_imbalance_cashflows_by_bsc_party_type(bsc_roles_to_generator_mapping, new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids)
+    so_cashflows_df = recalculate_imbalance_cashflows.get_recalculated_imbalance_cashflows_SO(new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids, zero_metered_volume_only)
+    supplier_cashflows_df = recalculate_imbalance_cashflows.recalculate_imbalance_cashflows_by_bsc_party_type(bsc_roles_to_supplier_mapping, new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids, zero_metered_volume_only)
+    generator_cashflows_df = recalculate_imbalance_cashflows.recalculate_imbalance_cashflows_by_bsc_party_type(bsc_roles_to_generator_mapping, new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids, zero_metered_volume_only)
     npt_cashflows_df = recalculate_imbalance_cashflows.calculate_net_npt_cashflow(bsc_roles_to_npt_mapping, mr1b_df)
     marginal_emissions_df = carbon_emissions.calculate_marginal_emissions(full_ascending_settlement_stack_by_date_and_period, new_settlement_stacks_by_date_and_period, system_imbalance_with_and_without_npts_df, bmu_id_to_ci_mapping)
     

@@ -123,16 +123,11 @@ def get_npt_imbalance_data(
 ) -> pd.DataFrame:
     mr1b_df = mr1b_df.map(lambda x: x.strip() if isinstance(x, str) else x)
     mr1b_df_npts_only = mr1b_df[mr1b_df['Party ID'].map(bsc_roles_to_npt_mapping) == True]
-    # settlement_dates = []
-    # settlement_periods = []
-    # energy_imbalances = []
-    # for settlement_date, group in mr1b_df_npts_only.groupby('Settlement Date'):
-    #     for settlement_period, group_by_period in group.groupby('Settlement Period'):
-    #         energy_imbalance = group_by_period['Energy Imbalance Vol'].sum()
-    #         settlement_dates.append(settlement_date)
-    #         settlement_periods.append(settlement_period)
-    #         energy_imbalances.append(energy_imbalance)
-    grouped = mr1b_df_npts_only.groupby(['Settlement Date', 'Settlement Period'])['Energy Imbalance Vol'].sum().reset_index()
+    mr1b_df_npts_only_without_cobblestone = mr1b_df_npts_only[
+        (mr1b_df_npts_only['Party ID'] != 'CBBLESTN') &
+        (mr1b_df_npts_only['Party ID'] != 'OLDKENT')
+    ]
+    grouped =  mr1b_df_npts_only_without_cobblestone.groupby(['Settlement Date', 'Settlement Period'])['Energy Imbalance Vol'].sum().reset_index()
     grouped.columns = ['settlement_date', 'settlement_period', 'npt_total_imbalance']
     
     return grouped
@@ -145,7 +140,11 @@ def get_npt_imbalance_data_zero_metered_volume(
     mr1b_df_npts_only = mr1b_df[mr1b_df['Party ID'].map(bsc_roles_to_npt_mapping) == True]
     credited_energy_vol_column_name = 'Credited Energy Vol' if 'Credited Energy Vol' in mr1b_df_npts_only.columns else 'CreditedEnergyVol'
     mr1b_df_npts_zero_metered_vol_only = mr1b_df_npts_only[mr1b_df_npts_only[credited_energy_vol_column_name] == 0]
-    grouped = mr1b_df_npts_zero_metered_vol_only.groupby(['Settlement Date', 'Settlement Period'])['Energy Imbalance Vol'].sum().reset_index()
+    mr1b_df_npts_zero_metered_vol_without_cobblestone = mr1b_df_npts_zero_metered_vol_only[
+        (mr1b_df_npts_zero_metered_vol_only['Party ID'] != 'CBBLESTN') &
+        (mr1b_df_npts_zero_metered_vol_only['Party ID'] != 'OLDKENT')
+    ]
+    grouped = mr1b_df_npts_zero_metered_vol_without_cobblestone.groupby(['Settlement Date', 'Settlement Period'])['Energy Imbalance Vol'].sum().reset_index()
     grouped.columns = ['settlement_date', 'settlement_period', 'npt_total_imbalance']
     
     return grouped
