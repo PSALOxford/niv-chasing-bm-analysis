@@ -68,6 +68,7 @@ async def run(
     npt_cashflows_df = pd.concat(npt_cashflows)
     mefs_df = pd.concat(mefs)
     missing_data_df = pd.DataFrame(list(all_missing_data), columns=['settlement_date', 'settlement_period'])
+    missing_data_df = excel_interaction.order_by_settlement_date_and_period(missing_data_df)
     summary_df = create_summary_table(system_prices_df, system_imbalances_df, balancing_costs_df, so_cashflows_df, supplier_cashflows_df, generator_cashflows_df, intraday_cashflows_df, mefs_df)
     
     sheet_names_dict = {
@@ -198,11 +199,11 @@ async def run_by_month(
     print(f"Completed {year}-{month}")
     
     # Append to lists
-    system_prices.append(recalculated_system_prices)
-    system_imbalances.append(system_imbalance_with_and_without_npts_df)
+    system_prices.append(system_prices_df)
+    system_imbalances.append(system_imbalances_df)
     balancing_costs.append(balancing_costs_df)
-    original_balancing_revenue.append(original_balancing_revenue_by_group_df)
-    new_balancing_revenue.append(new_balancing_revenue_by_group_df)
+    original_balancing_revenue.append(original_balancing_revenue_df)
+    new_balancing_revenue.append(new_balancing_revenue_df)
     so_cashflows.append(so_cashflows_df)
     supplier_cashflows.append(supplier_cashflows_df)
     generator_cashflows.append(generator_cashflows_df)
@@ -256,7 +257,7 @@ def determine_supplier_net_position(
     bsc_roles_filepath: str,
     output_file_directory: str
 ) -> None:
-    mr1b_filepaths = excel_interaction.get_excel_filepaths('<PATH_TO_MR1B_EXCEL_REPORTS>')
+    mr1b_filepaths = excel_interaction.get_excel_filepaths()
     filepath_dict = excel_interaction.create_filepath_dict(mr1b_filepaths)
     bsc_id_to_strict_supplier_mapping = recalculate_niv.get_bsc_roles_to_supplier_mapping(bsc_roles_filepath, True)
     bsc_id_to_loose_supplier_mapping = recalculate_niv.get_bsc_roles_to_supplier_mapping(bsc_roles_filepath, False)

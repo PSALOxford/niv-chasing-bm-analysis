@@ -224,7 +224,7 @@ def remove_offers_until_quota_met(
     
     for i in range(len(ordered_settlement_stack_one_period) -1, -1, -1):
         row = ordered_settlement_stack_one_period.iloc[i]
-        if row['volume'] == True:
+        if row['so_flag'] == True or row['volume'] <= 0:
             continue
         
         accepted_offer_volume = ordered_settlement_stack_one_period.at[ordered_settlement_stack_one_period.index[i], 'volume']
@@ -253,7 +253,7 @@ def remove_bids_until_quota_met(
     
     for i in range(len(ordered_settlement_stack_one_period)):
         row = ordered_settlement_stack_one_period.iloc[i]
-        if row['so_flag'] == True:
+        if row['so_flag'] == True or row['volume'] >= 0:
             continue
         
         accepted_bid_volume = ordered_settlement_stack_one_period.at[ordered_settlement_stack_one_period.index[i], 'volume']
@@ -288,4 +288,5 @@ def check_missing_data(
     nan_rows = dataframe_to_check_copy[dataframe_to_check_copy.isna().any(axis=1)]
     nan_tuples = set(zip(nan_rows['settlement_date'], nan_rows['settlement_period']))
     missing_dates_and_periods.update(nan_tuples)
-    return missing_dates_and_periods
+    # Return keys in the same (YYYY-MM-DD string, int) form used elsewhere so that missing periods are dropped from outputs
+    return {(settlement_date.strftime('%Y-%m-%d'), int(settlement_period)) for settlement_date, settlement_period in missing_dates_and_periods}

@@ -125,24 +125,15 @@ def perform_arbitrage_tagging(
         cheaper_buy_actions = dmat_adjusted_buy_set[dmat_adjusted_buy_set['original_price'] <= sell_price]
         
         for buy_index, buy_row in cheaper_buy_actions.iterrows():
-            if sell_volume == 0:
-                break
-            sell_value = -sell_price * sell_volume #Change to positive value for ease of calculation, see section 13.2.c of https://bscdocs.elexon.co.uk/bsc/bsc-section-t-settlement-and-trading-charges#annex-t-1
-            buy_price = buy_row['original_price']
             buy_volume = dmat_adjusted_buy_set.at[buy_index, 'arbitrage_adjusted_volume']
             if buy_volume == 0:
                 continue
-            buy_value = buy_price * buy_volume
-            if buy_value >= sell_value:
-                buy_volume_to_remove = min(-sell_volume, buy_volume)
-                dmat_adjusted_buy_set.at[buy_index, 'arbitrage_adjusted_volume'] -= buy_volume_to_remove
-                dmat_adjusted_sell_set.at[sell_index, 'arbitrage_adjusted_volume'] += buy_volume_to_remove
+            volume_to_remove = min(-sell_volume, buy_volume)
+            dmat_adjusted_buy_set.at[buy_index, 'arbitrage_adjusted_volume'] -= volume_to_remove
+            dmat_adjusted_sell_set.at[sell_index, 'arbitrage_adjusted_volume'] += volume_to_remove
+            sell_volume += volume_to_remove
+            if sell_volume == 0:
                 break
-            else:
-                sell_volume_to_remove = min(-sell_volume, buy_volume)
-                dmat_adjusted_buy_set.at[buy_index, 'arbitrage_adjusted_volume'] -= sell_volume_to_remove
-                dmat_adjusted_sell_set.at[sell_index, 'arbitrage_adjusted_volume'] += sell_volume_to_remove
-                sell_volume += sell_volume_to_remove
         
     arbitrage_adjusted_buy_set = dmat_adjusted_buy_set.copy()
     arbitrage_adjusted_sell_set = dmat_adjusted_sell_set.copy()

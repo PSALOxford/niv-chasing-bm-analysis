@@ -1,4 +1,5 @@
 # niv-chasing-bm-analysis
+
 Code supporting the analysis of the effects of NIV chasing by non-physical traders in the GB market. This repository contains code for analysing Great Britain (GB) electricity Balancing Mechanism (BM) data, imbalance pricing, settlement cashflows, and related system metrics. It supports recalculation of system prices, Net Imbalance Volume (NIV), balancing and imbalance cashflows, stack-based pricing, and carbon emissions analysis.
 
 The codebase was developed to support the analysis in:
@@ -6,7 +7,7 @@ The codebase was developed to support the analysis in:
 > **Speculative Imbalance Positions by Non-Physical Traders: Impacts on Electricity System Balancing in Great Britain**
 > *Joseph Cary; Thomas Morstyn*
 > *Submitted to Energy Economics, 2026*
-> DOI: 
+> DOI:
 
 ---
 
@@ -154,9 +155,9 @@ If you use this code, please cite:
 
 ```bibtex
 @article{citation,
-  title={Paper Title},
+  title={Speculative Imbalance Positions by Non-Physical Traders: Impacts on Electricity System Balancing in Great Britain},
   author={Cary, Joseph and Morstyn, Thomas},
-  journal={Journal Name},
+  journal={Energy Economics},
   year={Year},
   doi={DOI}
 }
@@ -181,4 +182,3 @@ For questions related to the methodology or publication:
 * Institution: Power Systems Architecture Lab, Department of Engineering Science, University of Oxford
 
 ---
-
