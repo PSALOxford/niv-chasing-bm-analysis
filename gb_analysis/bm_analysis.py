@@ -3,8 +3,11 @@ import data_collection.elexon_interaction as elexon_interaction
 import ancillary_files.datetime_functions as datetime_functions
 import ancillary_files.excel_interaction as excel_interaction
 import calendar
+from pathlib import Path
 
 from elexonpy.api_client import ApiClient
+
+BM_UNITS_FILEPATH = Path(__file__).resolve().parent.parent / 'Supporting Data' / 'BM_Units.json'
 
 async def calculate_balancing_costs_breakdown(
     output_file_directory: str,
@@ -51,7 +54,7 @@ async def get_bm_offer_volume_by_wind(
     years: list[int]
 ) -> None:
     api_client = ApiClient()
-    bm_units = pd.read_json('<PATH TO BM UNITS JSON FILE>')
+    bm_units = pd.read_json(BM_UNITS_FILEPATH)
     wind_bmu_set = set(bm_units[bm_units['fuelType'] == 'WIND']['elexonBmUnit'].to_list())
     all_results = []
     for year in years:
@@ -93,7 +96,7 @@ async def get_bm_volume_by_ccgt(
     years: list[int]
 ) -> None:
     api_client = ApiClient()
-    bm_units = pd.read_json('/Users/josephcary/repos/niv-chasing-bm-analysis/Supporting Data/BM_Units.json')
+    bm_units = pd.read_json(BM_UNITS_FILEPATH)
     ccgt_set = set(bm_units[bm_units['fuelType'] == 'CCGT']['elexonBmUnit'].to_list())
     all_results = []
     missing_data = set()

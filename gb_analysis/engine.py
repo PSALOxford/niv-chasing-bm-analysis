@@ -20,6 +20,7 @@ async def run(
     years: list,
     months: list, 
     output_directory: str,
+    mr1b_directory: str,
     bsc_roles_filepath: str,
     tlms_filepath: str,
     bmu_to_carbon_intensity_filepath: str,
@@ -37,10 +38,9 @@ async def run(
     supplier_cashflows = []
     generator_cashflows = []
     intraday_cashflows = []
-    npt_cashflows = []
     mefs = []
     all_missing_data = set()
-    mr1b_filepaths = excel_interaction.get_excel_filepaths('<PATH_TO_MR1B_EXCEL_REPORTS>')
+    mr1b_filepaths = excel_interaction.get_excel_filepaths(mr1b_directory)
     filepath_dict = excel_interaction.create_filepath_dict(mr1b_filepaths)
     bsc_id_to_npt_mapping = recalculate_niv.get_bsc_id_to_npt_mapping(bsc_roles_filepath, strict_npt)
     bsc_id_to_supplier_mapping = recalculate_niv.get_bsc_roles_to_supplier_mapping(bsc_roles_filepath, strict_supplier)
@@ -54,7 +54,7 @@ async def run(
             await run_by_month(
                 month, year, bsc_id_to_npt_mapping, bsc_id_to_supplier_mapping, bsc_id_to_generator_mapping, tlms_by_bmu, bmu_id_to_ci_dict, 
                 mr1b_filepath, output_directory, system_prices, system_imbalances, balancing_costs, original_balancing_revenue, 
-                new_balancing_revenue, so_cashflows, supplier_cashflows, generator_cashflows, intraday_cashflows, npt_cashflows, mefs, all_missing_data, zero_metered_volume_only)
+                new_balancing_revenue, so_cashflows, supplier_cashflows, generator_cashflows, intraday_cashflows, mefs, all_missing_data, zero_metered_volume_only)
     
     system_prices_df = pd.concat(system_prices)
     system_imbalances_df = pd.concat(system_imbalances)
@@ -65,7 +65,6 @@ async def run(
     supplier_cashflows_df = pd.concat(supplier_cashflows)
     generator_cashflows_df = pd.concat(generator_cashflows)
     intraday_cashflows_df = pd.concat(intraday_cashflows)
-    npt_cashflows_df = pd.concat(npt_cashflows)
     mefs_df = pd.concat(mefs)
     missing_data_df = pd.DataFrame(list(all_missing_data), columns=['settlement_date', 'settlement_period'])
     missing_data_df = excel_interaction.order_by_settlement_date_and_period(missing_data_df)
@@ -83,7 +82,6 @@ async def run(
         'Supplier Cashflows': supplier_cashflows_df,
         'Generator Cashflows': generator_cashflows_df,
         'Intraday Cashflows': intraday_cashflows_df,
-        'NPT Cashflows': npt_cashflows_df,
         'MEFs': mefs_df
     }
     file_name = f'{years[0]}-{months[0]}_to_{years[-1]}-{months[-1]}_results'
@@ -110,7 +108,6 @@ async def run_by_month(
     supplier_cashflows: list, 
     generator_cashflows: list,
     intraday_cashflows: list,
-    npt_cashflows: list,
     mefs: list,
     all_missing_data: set[tuple[str, int]],
     zero_metered_volume_only: bool
@@ -151,15 +148,13 @@ async def run_by_month(
     so_cashflows_df = recalculate_imbalance_cashflows.get_recalculated_imbalance_cashflows_SO(new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids, zero_metered_volume_only)
     supplier_cashflows_df = recalculate_imbalance_cashflows.recalculate_imbalance_cashflows_by_bsc_party_type(bsc_roles_to_supplier_mapping, new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids, zero_metered_volume_only)
     generator_cashflows_df = recalculate_imbalance_cashflows.recalculate_imbalance_cashflows_by_bsc_party_type(bsc_roles_to_generator_mapping, new_system_prices_by_date_and_period_df, mr1b_df, npt_bsc_ids, zero_metered_volume_only)
-    npt_cashflows_df = recalculate_imbalance_cashflows.calculate_net_npt_cashflow(bsc_roles_to_npt_mapping, mr1b_df)
     marginal_emissions_df = carbon_emissions.calculate_marginal_emissions(full_ascending_settlement_stack_by_date_and_period, new_settlement_stacks_by_date_and_period, system_imbalance_with_and_without_npts_df, bmu_id_to_ci_mapping)
     
     npt_intraday_position = calculate_npt_profit.calculate_id_position(system_imbalance_with_and_without_npts_df, ancillary_price_data_for_sp_calculation)
     supplier_generator_id_positions = npt_intraday_position.copy()
     supplier_generator_id_positions['id_cashflow'] = -supplier_generator_id_positions['id_cashflow']
-    npt_welfare = calculate_npt_profit.calculate_npt_welfare_midp(npt_cashflows_df, npt_intraday_position)
-    
-    #Output Monthly Data
+
+    # Output monthly data, excluding settlement periods with missing data
     system_prices_df = excel_interaction.process_df_for_output(recalculated_system_prices, missing_data_points)
     system_imbalances_df = excel_interaction.process_df_for_output(system_imbalance_with_and_without_npts_df, missing_data_points)
     balancing_costs_df = excel_interaction.process_df_for_output(balancing_costs_df, missing_data_points)
@@ -196,7 +191,7 @@ async def run_by_month(
         sheet_names_dict.values(), output_directory, f'{year}-{month}', sheet_names_dict.keys())
     print(f"Completed {year}-{month}")
     
-    # Append to lists
+    # Collect the filtered monthly results for the combined workbook
     system_prices.append(system_prices_df)
     system_imbalances.append(system_imbalances_df)
     balancing_costs.append(balancing_costs_df)
@@ -212,12 +207,13 @@ async def run_by_month(
 async def get_niv_results_zero_mv(
     years: list[int],
     months: list[int],
+    mr1b_directory: str,
     bsc_roles_filepath: str,
     strict_npt: bool,
     output_directory: str
 ) -> None:
     all_missing_data = set()
-    mr1b_filepaths = excel_interaction.get_excel_filepaths('<PATH_TO_MR1B_EXCEL_REPORTS>')
+    mr1b_filepaths = excel_interaction.get_excel_filepaths(mr1b_directory)
     filepath_dict = excel_interaction.create_filepath_dict(mr1b_filepaths)
     bsc_id_to_npt_mapping = recalculate_niv.get_bsc_id_to_npt_mapping(bsc_roles_filepath, strict_npt)
     api_client = ApiClient()
@@ -251,10 +247,11 @@ async def get_niv_results_zero_mv(
 def determine_supplier_net_position(
     years: list[int],
     months: list[int],
+    mr1b_directory: str,
     bsc_roles_filepath: str,
     output_file_directory: str
 ) -> None:
-    mr1b_filepaths = excel_interaction.get_excel_filepaths('<PATH_TO_MR1B_EXCEL_REPORTS>')
+    mr1b_filepaths = excel_interaction.get_excel_filepaths(mr1b_directory)
     filepath_dict = excel_interaction.create_filepath_dict(mr1b_filepaths)
     bsc_id_to_strict_supplier_mapping = recalculate_niv.get_bsc_roles_to_supplier_mapping(bsc_roles_filepath, True)
     bsc_id_to_loose_supplier_mapping = recalculate_niv.get_bsc_roles_to_supplier_mapping(bsc_roles_filepath, False)

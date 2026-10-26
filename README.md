@@ -7,7 +7,9 @@ The codebase was developed to support the analysis in:
 > **Speculative Imbalance Positions by Non-Physical Traders: Impacts on Electricity System Balancing in Great Britain**
 > *Joseph Cary; Thomas Morstyn*
 > *Submitted to Energy Economics, 2026*
-> DOI:
+> DOI: [10.2139/ssrn.7641018](https://doi.org/10.2139/ssrn.7641018) (SSRN preprint)
+
+Instructions for replicating the results, including data availability, are in **[REPLICATION.md](REPLICATION.md)**.
 
 ---
 
@@ -34,41 +36,49 @@ The code is modular and designed to allow replication of published results and e
 
 ## Repository Structure
 
-Core modules:
+`program.py` is the entry point. It sets the inputs and calls `gb_analysis/engine.py`.
+
+`gb_analysis/` – counterfactual simulation and analysis:
 
 * `engine.py` – Main execution logic
+* `recalculate_niv.py` – Net Imbalance Volume recalculation
+* `recalculate_settlement_stack.py` – Settlement stack reconstruction
+* `system_price_from_stack.py` – System price derivation from stack
+* `recalculate_balancing_cashflows.py` – Balancing cashflow recalculation
+* `recalculate_imbalance_cashflows.py` – Imbalance cashflow recalculation
+* `calculate_npt_profit.py` – NPT intraday position and profit calculation
+* `carbon_emissions.py` – Marginal emissions factor estimation
+* `bm_analysis.py` – Descriptive analyses of BM data
+* `summary.py` – Summary statistics
+
+`data_collection/` – data access:
+
+* `elexon_interaction.py` – Interface to the Elexon Insights API
+
+`data_processing/` – data handling:
+
 * `price_data_processing.py` – Processing of price inputs
 * `stack_data_handler.py` – Settlement stack construction and manipulation
 * `bm_physical_data_handler.py` – Handling of BM physical notifications
 * `bm_unit.py` – BM unit abstraction
 * `boa.py` – Bid/Offer Acceptance logic
-* `elexon_interaction.py` – Interface to Elexon data
-* `recalculate_niv.py` – Net Imbalance Volume recalculation
-* `system_price_from_stack.py` – System price derivation from stack
-* `recalculate_settlement_stack.py` – Settlement stack reconstruction
-* `recalculate_balancing_cashflows.py` – Balancing cashflow recalculation
-* `recalculate_imbalance_cashflows.py` – Imbalance cashflow recalculation
-* `calculate_npt_profit.py` – NPT profit calculation
-* `bm_analysis.py` – Analytical utilities
-* `summary.py` – Summary statistics
-* `carbon_emissions.py` – Carbon emissions estimation
-* `datetime_functions.py` - Ancillary functions to convert between settlement periods and time
-* `excel_interaction` - Inputs and outputs from excel
+
+`ancillary_files/` – helper functions:
+
+* `datetime_functions.py` – Convert between settlement periods and time
+* `excel_interaction.py` – Read inputs from and write outputs to Excel
+
+`Supporting Data/` – input files that can be shared (BSC party roles, TLMs, BM Unit reference data).
 
 ---
 
 ## Installation
 
-### Requirements
+Python 3.12 was used for the paper. Install the pinned dependencies with:
 
-* Python 3.9+ (recommended)
-* Standard scientific Python stack:
-
-  * `pandas`
-  * `numpy`
-  * `matplotlib` (if using plotting functionality)
-  * Any additional dependencies required by `elexon_interaction.py`
-  * asyncio
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
@@ -76,55 +86,23 @@ Core modules:
 
 This repository does **not** include raw BM, MR1B, or settlement data.
 
-You will need:
+* All BM data (DISEBSP, ISPSTACK, BOD, PN/MELS/MILS, MID, NETBSAD) are downloaded at run time from the Elexon Insights API. No API key is needed.
+* Party-level imbalance data (MR1B) are available only on request from Elexon and are not redistributed here.
+* The BSC party roles, TLMs and BM Unit reference data used in the paper are in `Supporting Data/`.
 
-* Elexon Balancing Mechanism Reports Service (BMRS) data and/or API access
-* Relevant settlement, bid/offer, and physical notification datasets
-* Any additional reference datasets used in the paper
-
-Data sources must be obtained in compliance with Elexon licensing terms.
-
-Directory structure for data (example):
-
-```
-data/
-  raw/
-  processed/
-  outputs/
-```
-
-Adjust paths in the scripts as required.
+See **[REPLICATION.md](REPLICATION.md)** for the full data availability table, input file formats, and how to obtain each dataset. Data must be used in compliance with Elexon licensing terms.
 
 ---
 
 ## Reproducing Results
 
-To reproduce the main results from the paper:
-
-1. Obtain the required BM and settlement datasets.
-2. Configure data paths in the relevant modules.
-3. Run the workflow in the following logical order:
-
-   * Process raw data
-   * Recalculate settlement stack
-   * Recalculate NIV
-   * Derive system price
-   * Recalculate balancing and imbalance cashflows
-   * Generate summary outputs
-
-Depending on your setup, execution may begin via:
+Set `mr1b_directory` (and, if needed, the other inputs) at the top of `program.py`, then run:
 
 ```bash
-python engine.py
+python program.py
 ```
 
-or by running individual recalculation modules.
-
-For reproducibility, it is recommended to:
-
-* Use fixed data snapshots
-* Tag the repository version corresponding to the publication (e.g., `v1.0-paper`)
-* Archive the release with a DOI (e.g., Zenodo)
+For step-by-step instructions, a description of the outputs, auxiliary analyses and the mapping from outputs to the paper's tables and figures, see **[REPLICATION.md](REPLICATION.md)**.
 
 ---
 
@@ -151,25 +129,23 @@ Users should review the associated paper for full methodological detail.
 
 ## Citation
 
-If you use this code, please cite:
+If you use this code, please cite the paper (see also `CITATION.cff`):
 
 ```bibtex
-@article{citation,
+@misc{cary2026speculative,
   title={Speculative Imbalance Positions by Non-Physical Traders: Impacts on Electricity System Balancing in Great Britain},
   author={Cary, Joseph and Morstyn, Thomas},
-  journal={Energy Economics},
-  year={Year},
-  doi={DOI}
+  year={2026},
+  doi={10.2139/ssrn.7641018},
+  note={SSRN preprint. Submitted to Energy Economics}
 }
 ```
-
-You may also cite the software directly once a DOI is minted.
 
 ---
 
 ## License
 
-This repository is licensed under the MIT License (LICENSE)
+The code in this repository is licensed under the MIT License (see [LICENSE](LICENSE)). Data obtained from Elexon is subject to Elexon's licence terms.
 
 ---
 
