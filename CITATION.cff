@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper below."
+title: "niv-chasing-bm-analysis"
+abstract: "Code supporting the analysis of the effects of NIV chasing by non-physical traders on balancing in the Great Britain electricity market."
+type: software
+authors:
+  - family-names: Cary
+    given-names: Joseph
+    affiliation: "Department of Engineering Science, University of Oxford"
+  - family-names: Morstyn
+    given-names: Thomas
+    affiliation: "Department of Engineering Science, University of Oxford"
+repository-code: "https://github.com/PSALOxford/niv-chasing-bm-analysis"
+license: MIT
+preferred-citation:
+  type: unpublished
+  title: "Speculative Imbalance Positions by Non-Physical Traders: Impacts on Electricity System Balancing in Great Britain"
+  authors:
+    - family-names: Cary
+      given-names: Joseph
+    - family-names: Morstyn
+      given-names: Thomas
+  year: 2026
+  doi: "10.2139/ssrn.7641018"
+  notes: "Submitted to Energy Economics. SSRN preprint."

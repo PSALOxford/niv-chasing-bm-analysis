@@ -2,10 +2,10 @@ import asyncio
 
 from gb_analysis.engine import run
 
-years = [2021, 2022, 2023, 2024]  # Years to analyze
+years = [2021, 2022, 2023, 2024]  # Years to analyse
 months = [i for i in range(1, 13)]  # January to December
 output_directory = '' #Location for output excel files
-bsc_roles = '' #Filepath to mapping form BSC ID to their status in each type (e.g. TN, TG, TS is assigned True or Fals) 
+bsc_roles = '' #Filepath to mapping from BSC ID to their status in each type (e.g. TN, TG, TS is assigned True or False) 
 tlms = '' #Filepath from BMU ID to TLM
 bmu_id_to_ci_mapping = '' #Filepath from BMU ID to Carbon Intensity mapping
 #The following can be toggled between True and False

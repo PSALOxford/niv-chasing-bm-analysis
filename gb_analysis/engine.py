@@ -158,7 +158,7 @@ async def run_by_month(
     supplier_generator_id_positions = npt_intraday_position.copy()
     supplier_generator_id_positions['id_cashflow'] = -supplier_generator_id_positions['id_cashflow']
     npt_welfare = calculate_npt_profit.calculate_npt_welfare_midp(npt_cashflows_df, npt_intraday_position)
-    #TODO - may want to change how all these results are presented 
+    
     #Output Monthly Data
     system_prices_df = excel_interaction.process_df_for_output(recalculated_system_prices, missing_data_points)
     system_imbalances_df = excel_interaction.process_df_for_output(system_imbalance_with_and_without_npts_df, missing_data_points)
@@ -169,7 +169,6 @@ async def run_by_month(
     so_cashflows_df = excel_interaction.process_df_for_output(so_cashflows_df, missing_data_points)
     supplier_cashflows_df = excel_interaction.process_df_for_output(supplier_cashflows_df, missing_data_points)
     generator_cashflows_df = excel_interaction.process_df_for_output(generator_cashflows_df, missing_data_points)
-    npt_welfare_df = excel_interaction.process_df_for_output(npt_welfare, missing_data_points)
     marginal_emissions_df = excel_interaction.process_df_for_output(marginal_emissions_df, missing_data_points)
     missing_data_df = pd.DataFrame(list(missing_data_points), columns=['settlement_date', 'settlement_period'])
     missing_data_df = excel_interaction.order_by_settlement_date_and_period(missing_data_df)
@@ -190,7 +189,6 @@ async def run_by_month(
         'Supplier Cashflows': supplier_cashflows_df,
         'Generator Cashflows': generator_cashflows_df,
         'Intraday Cashflows': intraday_cashflow_df,
-        'NPT Welfare': npt_welfare_df,
         'Marginal Emissions Factors': marginal_emissions_df
     }
     
@@ -208,7 +206,6 @@ async def run_by_month(
     supplier_cashflows.append(supplier_cashflows_df)
     generator_cashflows.append(generator_cashflows_df)
     intraday_cashflows.append(intraday_cashflow_df)
-    npt_cashflows.append(npt_welfare_df)
     mefs.append(marginal_emissions_df)
     all_missing_data.update(missing_data_points)
     
@@ -257,7 +254,7 @@ def determine_supplier_net_position(
     bsc_roles_filepath: str,
     output_file_directory: str
 ) -> None:
-    mr1b_filepaths = excel_interaction.get_excel_filepaths()
+    mr1b_filepaths = excel_interaction.get_excel_filepaths('<PATH_TO_MR1B_EXCEL_REPORTS>')
     filepath_dict = excel_interaction.create_filepath_dict(mr1b_filepaths)
     bsc_id_to_strict_supplier_mapping = recalculate_niv.get_bsc_roles_to_supplier_mapping(bsc_roles_filepath, True)
     bsc_id_to_loose_supplier_mapping = recalculate_niv.get_bsc_roles_to_supplier_mapping(bsc_roles_filepath, False)

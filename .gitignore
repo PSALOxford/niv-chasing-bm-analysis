@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Results written by program.py
+output/
+
+# Local editor and tool settings
+.vscode/
+.claude/
+
+# Data that cannot be redistributed (MR1B reports are available on request from Elexon)
+MR1B*

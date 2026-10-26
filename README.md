@@ -52,7 +52,7 @@ Core modules:
 * `bm_analysis.py` – Analytical utilities
 * `summary.py` – Summary statistics
 * `carbon_emissions.py` – Carbon emissions estimation
-* `datetime_functions.py` - Ancilarry functions to convert between settlement periods and time
+* `datetime_functions.py` - Ancillary functions to convert between settlement periods and time
 * `excel_interaction` - Inputs and outputs from excel
 
 ---
@@ -134,7 +134,7 @@ For reproducibility, it is recommended to:
 * System price derivation is performed directly from the recalculated stack.
 * NIV recalculation is based on reconstructed accepted volumes.
 * Cashflow calculations follow standard GB settlement rules unless otherwise stated.
-* Carbon emissions are estimated using technology-level or unit-level emissions factors where available.
+* Carbon emissions are estimated using unit-level marginal emissions factors where available.
 
 Users should review the associated paper for full methodological detail.
 

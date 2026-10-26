@@ -51,7 +51,7 @@ async def get_bm_offer_volume_by_wind(
     years: list[int]
 ) -> None:
     api_client = ApiClient()
-    bm_units = pd.read_json('Supporting Data/BM_Units.json')
+    bm_units = pd.read_json('<PATH TO BM UNITS JSON FILE>')
     wind_bmu_set = set(bm_units[bm_units['fuelType'] == 'WIND']['elexonBmUnit'].to_list())
     all_results = []
     for year in years:
@@ -93,7 +93,7 @@ async def get_bm_volume_by_ccgt(
     years: list[int]
 ) -> None:
     api_client = ApiClient()
-    bm_units = pd.read_json('Supporting Data/BM_Units.json')
+    bm_units = pd.read_json('/Users/josephcary/repos/niv-chasing-bm-analysis/Supporting Data/BM_Units.json')
     ccgt_set = set(bm_units[bm_units['fuelType'] == 'CCGT']['elexonBmUnit'].to_list())
     all_results = []
     missing_data = set()

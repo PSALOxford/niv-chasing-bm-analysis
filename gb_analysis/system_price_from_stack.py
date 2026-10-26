@@ -161,7 +161,7 @@ def perform_classification(
         most_expensive_unflagged_buy_action = first_stage_unflagged_buy_actions.iloc[-1]['original_price']
         for index, row in arbitrage_adjusted_buy_set.iterrows():
             if row['original_price'] is None or math.isnan(row['original_price']):
-                continue #8.4: any null priced action shall not become unflagged
+                continue  # BSC Section T, Annex T-1, 8.4: any null priced action shall not become unflagged
             elif row['original_price'] > most_expensive_unflagged_buy_action:
                 arbitrage_adjusted_buy_set.at[index, 'second_stage_flagged'] = True
             else:
@@ -174,7 +174,7 @@ def perform_classification(
         most_expensive_unflagged_sell_action = first_stage_unflagged_sell_actions.iloc[-1]['original_price']
         for index, row in arbitrage_adjusted_sell_set.iterrows():
             if row['original_price'] is None or math.isnan(row['original_price']):
-                continue #8.4: any null priced action shall not become unflagged
+                continue  # BSC Section T, Annex T-1, 8.4: any null priced action shall not become unflagged
             elif row['original_price'] < most_expensive_unflagged_sell_action:
                 arbitrage_adjusted_sell_set.at[index, 'second_stage_flagged'] = True
             else:

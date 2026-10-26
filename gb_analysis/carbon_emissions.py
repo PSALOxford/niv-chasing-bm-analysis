@@ -51,9 +51,13 @@ def get_mef_and_bmu_id(
         return None, None
     if system_imbalance < 0:
         candidates = unflagged_settlement_stack[unflagged_settlement_stack['volume'] < 0]
+        if candidates.empty:
+            return None, None
         marginal_action = candidates.iloc[0]
     else:
         candidates = unflagged_settlement_stack[unflagged_settlement_stack['volume'] > 0]
+        if candidates.empty:
+            return None, None
         marginal_action = candidates.iloc[-1]
     
     marginal_action_bmu_id = marginal_action['id']

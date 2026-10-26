@@ -41,10 +41,6 @@ async def recalculate_niv_zero_metered_volume(
         mr1b_df,
         bsc_roles_to_npt_mapping
     )
-    # npt_imbalance = get_npt_imbalance_data(
-    #     mr1b_df,
-    #     bsc_roles_to_npt_mapping
-    # )
     
     outturn_system_length = standardize_merge_columns(niv_data)
     npt_zero_mv_imbalances = standardize_merge_columns(npt_zero_mv_imbalances)
@@ -53,11 +49,6 @@ async def recalculate_niv_zero_metered_volume(
         npt_zero_mv_imbalances, 
         on=['settlement_date', 'settlement_period'], 
         how='outer')
-    # .merge(
-    #     npt_imbalance,
-    #     on=['settlement_date', 'settlement_period'],
-    #     how='outer'
-    # )
     combined_data['counterfactual_niv'] = combined_data['net_imbalance_volume'] + combined_data['npt_total_imbalance']
     # combined_data['counterfactual_niv'] = combined_data['net_imbalance_volume'] + combined_data['npt_total_imbalance']
     missing_dates_and_periods = check_missing_data(combined_data, settlement_dates_and_periods_per_day)

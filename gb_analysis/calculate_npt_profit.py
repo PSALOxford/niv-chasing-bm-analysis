@@ -74,7 +74,7 @@ def calculate_npt_welfare_from_id_prices(
     combined_df['applicable_25mw_price'] = combined_df.apply(
         lambda row: row['average_best_sell_25mw'] if row['npt_total_imbalance'] < 0 else row['average_best_buy_25mw'], axis=1
     )
-    combined_df['1mw_value'] = combined_df['applicable_1mw_price'] * combined_df['npt_total_imbalance'] * 2 / 100 #Multiple by 2 as best price values given for a MW hour; divide by 100 as given in pence]
+    combined_df['1mw_value'] = combined_df['applicable_1mw_price'] * combined_df['npt_total_imbalance'] * 2 / 100 # Multiply by 2 as best price values are given per MWh over an hour; divide by 100 as prices are given in pence
     combined_df['10mw_value'] = combined_df['applicable_10mw_price'] * combined_df['npt_total_imbalance'] * 2 / 100
     combined_df['25mw_value'] = combined_df['applicable_25mw_price'] * combined_df['npt_total_imbalance'] * 2 / 100
     

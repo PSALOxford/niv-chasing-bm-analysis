@@ -6,13 +6,11 @@ This document describes how to reproduce the results in
 
 It covers: (1) which datasets are used and how each can be obtained, (2) which input files must be prepared by hand, (3) how to run the pipeline, (4) what the pipeline outputs, and (5) how those outputs map to the tables and figures in the paper.
 
-> Items marked **`TODO(author)`** need to be completed by the authors before release.
-
 ---
 
 ## 1. Workflow at a glance
 
-The core analysis is a **counterfactual simulation**: for every half-hourly settlement period (SP), the imbalance volumes of non-physical traders (NPTs) are removed from the Net Imbalance Volume (NIV); the Balancing Mechanism (BM) settlement stack is then re-dispatched to meet the counterfactual NIV; the imbalance price is recomputed from the new stack following BSC Section T; and imbalance cashflows, balancing costs and marginal emissions are recalculated under both the factual and counterfactual cases.
+The core analysis is a **counterfactual simulation**: for every half-hourly settlement period (SP), the imbalance volumes of non-physical traders (NPTs) are removed from the Net Imbalance Volume (NIV); the Balancing Mechanism (BM) settlement stack is then re-dispatched to meet the counterfactual NIV; the imbalance price is recomputed from the new stack following the Balancing and Settlement Code Section T; and imbalance cashflows, balancing costs and marginal emissions are recalculated under both the factual and counterfactual cases.
 
 ```mermaid
 flowchart TD
@@ -35,7 +33,7 @@ flowchart TD
     STACK --> BAL["4a. Balancing costs & revenue<br/>recalculate_balancing_cashflows.py"]
     SP --> IMB["4b. Imbalance cashflows (SO, suppliers, generators)<br/>recalculate_imbalance_cashflows.py"]
     MR1B --> IMB
-    SP --> NPT["4c. NPT welfare / intraday cashflows<br/>calculate_npt_profit.py"]
+    SP --> NPT["4c. NPT intraday cashflows<br/>calculate_npt_profit.py"]
     STACK --> MEF["4d. Marginal emissions factors<br/>carbon_emissions.py"]
     CI --> MEF
     BAL & IMB & NPT & MEF --> OUT["5. Summary + per-SP results (Excel)<br/>summary.py, engine.py"]
@@ -62,16 +60,20 @@ Everything above is orchestrated by `gb_analysis/engine.py::run`, which is calle
 | **BSC party roles**                                            | Classifying parties as NPT / supplier / generator                                                                              | BSC Signatories list ([https://www.elexon.co.uk/bsc/about/elexon-key-contacts/bsc-signatories-qualified-persons/](https://www.elexon.co.uk/bsc/about/elexon-key-contacts/bsc-signatories-qualified-persons/)) | Public web page, transcribed manually                                                                          | Yes (derived from public information)            | Yes                          |
 | **BM Unit reference data**                                     | Fuel type per BMU (for carbon intensities, wind/CCGT analyses)                                                                 | Elexon Insights API —`/reference/bmunits/all` (saved as `BM_Units.json`)                                                                                                                                | Open, no API key                                                                                               | Yes, with attribution                            | No                           |
 | **Carbon intensity factors**                                   | Emissions factor per fuel type                                                                                                 | National Grid ESO Carbon Intensity API ([https://api.carbonintensity.org.uk/intensity/factors](https://api.carbonintensity.org.uk/intensity/factors))                                                         | Open                                                                                                           | Yes (CC BY 4.0)                                  | No                           |
+| **Intraday Prices**                                            | Realised trades data on the GB continuous intraday market for half-hourly delivery contracts                                   | EPEX Spot                                                                                                                                                                                                    | Available for purchase                                                                                         | No                                               | No                           |
 
 All Elexon Insights API data are accessed through the [`elexonpy`](https://pypi.org/project/elexonpy/) client and require no key. API data are fetched live each run, so published values that Elexon later revises (e.g. after reconciliation settlement runs) may cause small differences from the paper. Data downloaded on 28/9/2026.
 
 ### 2.2 Processed and intermediate data
+
+The BSC roles, TLM and BM Unit files are in `Supporting Data/`. The carbon intensity mapping is not included and must be built as described in §3.4 (default location: `Supporting Data/BMU Carbon Intensity.xlsx`). MR1B-derived results are not included.
 
 | File                                                        | Content                                   | Contains MR1B-derived data?                                               |
 | ----------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
 | BSC roles mapping (`BSC_ID`, `TN`, `TS`, `TG`)      | Role flags per BSC party                  | No                                                                        |
 | TLM mapping (`BM Unit ID`, `TLM`)                       | TLM per BMU                               | No                                                                        |
 | Carbon intensity mapping (`BMU_ID`, `Carbon Intensity`) | kgCO2/MWh per BMU                         | No                                                                        |
+| `BM_Units.json` | BM Unit reference data (fuel type per BMU), downloaded from the Elexon Insights API | No |
 | Per-month and aggregate results workbooks (Section 5)       | Per-SP factual and counterfactual results | **Yes** — aggregate NPT imbalance per SP, and party-type cashflows |
 
 ---
@@ -89,13 +91,13 @@ All Elexon Insights API data are accessed through the [`elexonpy`](https://pypi.
 | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `Party ID`                                         | BSC party ID (must match`BSC_ID` in the roles file)                           |
 | `Settlement Date`                                  | Settlement date                                                                 |
-| `Settlement Period`                                | Settlement period (1–46/48/50)                                                 |
+| `Settlement Period`                                | Settlement period (1–46/48/50, one for each half hour in the day)              |
 | `Energy Imbalance Vol`                             | Party energy imbalance volume (MWh; positive = long)                            |
 | `Imbalance Charge`                                 | Party imbalance charge (£; positive = paid by the party)                       |
 | `Credited Energy Vol` *or* `CreditedEnergyVol` | Credited (metered) energy volume; used only in the zero-metered-volume scenario |
 
 - Leading/trailing whitespace in text cells is stripped on load.
-- Set the folder containing these files at `gb_analysis/engine.py:43` (currently a hard-coded local path; the same path also appears at lines 222 and 259 for the auxiliary functions in Section 6).
+- Set the folder containing these files as `mr1b_directory` in `program.py` (see Section 4.2). The auxiliary functions in Section 6 take the same folder as an argument.
 
 ### 3.2 BSC party roles (`bsc_roles` in `program.py`)
 
@@ -145,19 +147,19 @@ pip install -r requirements.txt
 
 Edit the variables at the top of `program.py`:
 
-Also set the MR1B folder path (§3.1).
 
-| Variable                     | Meaning                                                                                                                                                           | Value used in the paper          |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `years`, `months`        | Months to process (every month is run for every year listed)                                                                                                      | Jan 2021 - Dec 2024              |
-| `output_directory`         | Where result workbooks are written                                                                                                                                | —                               |
-| `bsc_roles`                | Path to file from §3.2                                                                                                                                           | —                               |
-| `tlms`                     | Path to file from §3.3                                                                                                                                           | —                               |
-| `bmu_id_to_ci_mapping`     | Path to file from §3.4                                                                                                                                           | —                               |
-| `strict_npt`               | `True`: NPT = holds TN role and neither TS nor TG. `False`: any party holding TN                                                                              | True                             |
-| `strict_supplier`          | `True`: supplier = TS only. `False`: any party holding TS                                                                                                     | True                             |
-| `strict_generator`         | `True`: generator = TG only. `False`: any party holding TG                                                                                                    | True                             |
-| `zero_metered_volume_only` | `True`: remove only NPT accounts with zero credited energy volume (**ZMV** scenario). `False`: remove all NPT imbalance volume (**AMV** scenario) | Both True (ZMV) and False (AMV) |
+| Variable                     | Meaning                                                                                                                                                                                               | Value used in the paper          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `years`, `months`        | Months to process (every month is run for every year listed)                                                                                                                                          | Jan 2021 - Dec 2024              |
+| `output_directory`         | Where result workbooks are written                                                                                                                                                                    | —                               |
+| `mr1b_directory`           | Folder with the monthly MR1B reports from §3.1 | Not redistributable; obtain from Elexon |
+| `bsc_roles`                | Path to file from §3.2                                                                                                                                                                               | —                               |
+| `tlms`                     | Path to file from §3.3                                                                                                                                                                               | —                               |
+| `bmu_id_to_ci_mapping`     | Path to file from §3.4                                                                                                                                                                               | —                               |
+| `strict_npt`               | `True`: NPT = holds TN role and neither TS nor TG. `False`: any party holding TN                                                                                                                  | True                             |
+| `strict_supplier`          | `True`: supplier = TS only. `False`: any party holding TS                                                                                                                                         | True                             |
+| `strict_generator`         | `True`: generator = TG only. `False`: any party holding TG                                                                                                                                        | True                             |
+| `zero_metered_volume_only` | `True`: remove only NPT accounts with zero credited energy volume from counterfactual NIV calculation (**ZMV** scenario). `False`: remove all NPT imbalance volume (**AMV** scenario) | Both True (ZMV) and False (AMV) |
 
 ### 4.3 Run
 
@@ -184,7 +186,7 @@ For each month, the code writes a workbook `{year}-{month}.xlsx` to `output_dire
 | 3    | `system_price_from_stack.get_new_system_prices_by_date_and_period`          | Recomputes the imbalance price from the counterfactual stack following BSC Section T, Annex T-1: de minimis tagging (0.1 MWh), arbitrage tagging, SO/CADL flag classification, NIV tagging, replacement price (RPAR = 1 MWh), PAR tagging (1 MWh), TLM adjustment, then adds BPA/SPA from NETBSAD. If the stack is empty, the MID price is used.                                                                                                                                                                                                                                                                    |
 | 4a   | `recalculate_balancing_cashflows`                                           | Balancing cost = Σ price × volume over the stack, for the factual and counterfactual stacks, also broken down by BMU group (first character of the BMU ID).                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 4b   | `recalculate_imbalance_cashflows`                                           | Factual cashflows come from MR1B`Imbalance Charge`. Counterfactual cashflows set NPT volumes to zero and revalue the remaining `Energy Imbalance Vol` at the recalculated SP. Calculated for the SO, suppliers and generators.                                                                                                                                                                                                                                                                                                                                                                                  |
-| 4c   | `calculate_npt_profit`                                                      | The NPT intraday position is taken as the negative of its imbalance volume, valued at MID. NPT welfare = imbalance cashflow + intraday cashflow.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 4c   | `calculate_npt_profit`                                                      | The NPT intraday position is taken as the negative of its imbalance volume, valued at MID. The negated value is the counterparty (`Intraday Cashflows`) cashflow. NPT profit is not estimated in the paper.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 4d   | `carbon_emissions.calculate_marginal_emissions`                             | The marginal unflagged action in the factual and counterfactual stacks is mapped to a carbon intensity via its BMU.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | 5    | `summary.create_summary_table`                                              | Factual vs counterfactual summary statistics.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
@@ -201,7 +203,6 @@ For each month, the code writes a workbook `{year}-{month}.xlsx` to `output_dire
 | `SO Cashflows`                                                | `energy_imbalance_cashflow`, `recalculated_energy_imbalance_cashflow` (positive = SO revenue)    | £               |
 | `Supplier Cashflows` / `Generator Cashflows`                | `energy_imbalance_cashflow`, `recalculated_energy_imbalance_cashflow` (positive = party profit)  | £               |
 | `Intraday Cashflows`                                          | `id_cashflow` (counterparties to NPT intraday trades)                                              | £               |
-| `NPT Welfare` (monthly) / `NPT Cashflows` (aggregate)       | `npt_imbalance_cashflow`, `id_cashflow`, `npt_welfare`                                         | £               |
 | `Marginal Emissions Factors` (monthly) / `MEFs` (aggregate) | `factual_mef`, `factual_marginal_unit`, `counterfactual_mef`, `counterfactual_marginal_unit` | kgCO2/MWh        |
 
 ---
@@ -213,10 +214,10 @@ These functions are not called by `program.py`. Call them from a short script, a
 | Function                                                                                                                                    | Inputs                                                                  | Output                                                                                |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `gb_analysis.bm_analysis.calculate_balancing_costs_breakdown(out_dir, name, years)`                                                       | ISPSTACK                                                                | Energy balancing cost (unflagged) vs system balancing cost (SO-flagged), per SP       |
-| `gb_analysis.engine.determine_supplier_net_position(years, months, bsc_roles, out_dir)`                                                   | MR1B                                                                    | Aggregate supplier imbalance per SP, under both strict and loose supplier definitions |
+| `gb_analysis.engine.determine_supplier_net_position(years, months, mr1b_dir, bsc_roles, out_dir)`                                                   | MR1B                                                                    | Aggregate supplier imbalance per SP, under both strict and loose supplier definitions |
 | `gb_analysis.recalculate_imbalance_cashflows.recalculate_imbalance_cashflows_from_excel(bsc_roles, price_xlsx, sheet, mr1b_dir, out_dir)` | MR1B, a workbook of recalculated prices with columns`AMV` and `ZMV` | SO, supplier, generator and mixed-role cashflows under both AMV and ZMV scenarios     |
 
-\* `BM_Units.json` is read from a hard-coded path at `gb_analysis/bm_analysis.py:54` and `:96`.
+\* `BM_Units.json` is read from `Supporting Data/BM_Units.json` in this repository.
 
 Example:
 
@@ -231,27 +232,16 @@ asyncio.run(calculate_balancing_costs_breakdown("outputs/", "balancing_cost_brea
 
 ## 7. Mapping to the paper
 
-`TODO(author): fill in the table/figure numbers and remove any rows that do not appear in the paper.`
+| Paper element | Quantity                                                   | Produced by    | Where to find it                                 |
+| ------------- | ---------------------------------------------------------- | -------------- | ------------------------------------------------ |
+| Table 3       | Factual vs counterfactual average SP and SP volatility     | `program.py` | Aggregate workbook →`Summary`                 |
+| Table 3       | NIV statistics (mean, mean absolute, s.d., total absolute) | `program.py` | `Summary`; per SP in `System Imbalances`     |
+| Table 3       | Total balancing costs                                      | `program.py` | `Summary`; per SP in `Balancing Costs`       |
+| Table 3       | Imbalance cashflows by SO, suppliers, generators           | `program.py` | `Summary`; `SO/Supplier/Generator Cashflows` |
+| Discussion    | Average marginal emissions factor                          | `program.py` | `Summary`; `MEFs`                            |
+| Figure 5      | Distribution of factual vs counterfactual NIV              | `program.py` | `System Prices`, `System Imbalances`         |
 
-| Paper element    | Quantity                                                   | Produced by                                                                                                                            | Where to find it                                 |
-| ---------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Table [?]        | Factual vs counterfactual average SP and SP volatility     | `program.py`                                                                                                                         | Aggregate workbook →`Summary`                 |
-| Table [?]        | NIV statistics (mean, mean absolute, s.d., total absolute) | `program.py`                                                                                                                         | `Summary`; per SP in `System Imbalances`     |
-| Table [?]        | Total balancing costs                                      | `program.py`                                                                                                                         | `Summary`; per SP in `Balancing Costs`       |
-| Table [?]        | Imbalance cashflows by SO, suppliers, generators           | `program.py`                                                                                                                         | `Summary`; `SO/Supplier/Generator Cashflows` |
-| Table [?]        | NPT welfare                                                | `program.py`                                                                                                                         | `NPT Cashflows` (aggregate)                    |
-| Table [?]        | Average marginal emissions factor                          | `program.py`                                                                                                                         | `Summary`; `MEFs`                            |
-| Figure [?]       | Balancing revenue by BMU group                             | `program.py`                                                                                                                         | `Original/New Balancing Revenue`               |
-| Figure [?]       | Distribution of factual vs counterfactual SP / NIV         | `program.py`                                                                                                                         | `System Prices`, `System Imbalances`         |
-| Table/Figure [?] | AMV vs ZMV scenario comparison                             | `program.py` run twice with `zero_metered_volume_only` = `False` / `True`, then `recalculate_imbalance_cashflows_from_excel` | `Imbalance Cashflows.xlsx`                     |
-| Table/Figure [?] | Sensitivity to strict vs loose role definitions            | `program.py` with `strict_*` toggled                                                                                               | `Summary`                                      |
-| Figure [?]       | Energy vs system balancing costs                           | `calculate_balancing_costs_breakdown`                                                                                                | Output workbook                                  |
-| Figure [?]       | Wind share of accepted offers                              | `get_bm_offer_volume_by_wind`                                                                                                        | Output workbook                                  |
-| Figure [?]       | CCGT BM volumes                                            | `get_bm_volume_by_ccgt`                                                                                                              | Output workbook                                  |
-| Figure [?]       | Share of BOAs before gate / SP start                       | `calculate_number_of_boa_before_settlement_period`                                                                                   | Output workbook                                  |
-| Figure [?]       | Supplier net position                                      | `determine_supplier_net_position`                                                                                                    | Output workbook                                  |
-
-Figures were produced from these workbooks using `TODO(author): state the plotting tool/scripts; these are not included in the repository`.
+Figures were produced from these workbooks using matplotlib.
 
 ---
 
